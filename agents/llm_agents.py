@@ -14,8 +14,8 @@ ALLOWED_TYPES = {f"E{i:02d}" for i in range(1, 11)}
 SEVERITIES = {"高", "中", "低"}
 
 
-def _prompt(name: str) -> str:
-    return (PROMPTS_DIR / f"{name}.v1.txt").read_text(encoding="utf-8")
+def _prompt(name: str, version: str = "v1") -> str:
+    return (PROMPTS_DIR / f"{name}.{version}.txt").read_text(encoding="utf-8")
 
 
 def _quote_contains(quote: str, value: float) -> bool:
@@ -31,7 +31,7 @@ def extract_claims_llm(blocks: list[dict], facts: dict, llm, logger) -> list[dic
         {"role": "system", "content": _prompt("claim_extractor")},
         {"role": "user", "content": json.dumps(paragraphs, ensure_ascii=False)},
     ]
-    data, out = llm.chat_json(messages, prompt_version="claim_extractor.v1", max_tokens=8192)
+    data, out = llm.chat_json(messages, prompt_version="claim_extractor.v1", max_tokens=16384)
     text_by_loc = {b["id"]: b["text"] for b in blocks if b["type"] == "paragraph"}
     claims = []
     for i, item in enumerate(data if isinstance(data, list) else []):
@@ -88,10 +88,10 @@ def adjudicate_errors(candidates: list[dict], llm, logger):
         "correction": e["correction"], "evidence": e["evidence"], "locations": e["locations"],
     } for e in candidates], ensure_ascii=False)
     messages = [
-        {"role": "system", "content": _prompt("adjudicator")},
+        {"role": "system", "content": _prompt("adjudicator", "v2")},
         {"role": "user", "content": payload},
     ]
-    data, out = llm.chat_json(messages, prompt_version="adjudicator.v1", max_tokens=8192)
+    data, out = llm.chat_json(messages, prompt_version="adjudicator.v2", max_tokens=16384)
     verdicts = {}
     for v in data if isinstance(data, list) else []:
         cid = v.get("claim_id")
@@ -110,7 +110,7 @@ def adjudicate_errors(candidates: list[dict], llm, logger):
             stats["rejected"] += 1
             logger.log("llm_reject", tool="llm",
                        input={"claim_id": e["claim_id"], "wrong_text": e["wrong_text"][:80]},
-                       output={"reason": v.get("reason", "")}, prompt_version="adjudicator.v1")
+                       output={"reason": v.get("reason", "")}, prompt_version="adjudicator.v2")
             continue
         if v.get("error_type") in ALLOWED_TYPES:
             e["error_type"] = v["error_type"]
@@ -125,7 +125,7 @@ def adjudicate_errors(candidates: list[dict], llm, logger):
         final.append(e)
     logger.log("llm_adjudicate", tool="llm", input={"candidates": len(candidates)},
                output={**stats, "kept": len(final), "cached": out.get("cached"), "usage": out.get("usage")},
-               prompt_version="adjudicator.v1")
+               prompt_version="adjudicator.v2")
     return final, stats
 
 

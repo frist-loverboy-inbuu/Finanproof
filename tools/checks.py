@@ -10,17 +10,20 @@ TYPE_NAMES = {
     "E09": "遗漏风险", "E10": "表述不严谨",
 }
 
+CONN = r"(?:\s*[为达约是])?\s*"
+
 METRIC_PATTERNS = [
-    ("扣非归母净利润", re.compile(r"扣非归母净利润\s*(?:约|达)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("归母净利润", re.compile(r"(?:归属于上市公司股东的净利润|(?<!扣非)归母净利润)\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("营业总收入", re.compile(r"营业总收入\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("营业收入", re.compile(r"(?<!总)营业收入\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("归母净资产", re.compile(r"(?:归属于上市公司股东的净资产|归母净资产)\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("总资产", re.compile(r"总资产\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)")),
-    ("经营现金流净额", re.compile(r"经营活动产生的现金流量净额\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
-    ("基本每股收益", re.compile(r"基本每股收益\s*(?:达|约)?\s*([\d,]+\.\d+)\s*(亿元|万元|千元|元/股|元)?")),
+    ("扣非归母净利润", re.compile(r"(?:扣非归母净利润|归属于上市公司股东的扣除非经常性损益的净利润)" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("归母净利润", re.compile(r"(?:归属于上市公司股东的净利润|(?<!扣非)归母净利润)" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("营业总收入", re.compile(r"营业总收入" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("营业收入", re.compile(r"(?<!总)营业收入" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("归母净资产", re.compile(r"(?:归属于上市公司股东的净资产|归母净资产)" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("总资产", re.compile(r"总资产" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)")),
+    ("经营现金流净额", re.compile(r"经营活动产生的现金流量净额" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元)?")),
+    ("基本每股收益", re.compile(r"基本每股收益" + CONN + r"([\d,]+\.\d+)\s*(亿元|万元|千元|元/股|元)?")),
     ("毛利率", re.compile(r"综合毛利率约?\s*([\d.]+)\s*%")),
-    ("PE", re.compile(r"(?:动态)?PE\s*约?\s*([\d.]+)\s*倍")),
+    ("2025目标增速", re.compile(r"2025\s*年[^。；]{0,15}?增长目标[^。；0-9]{0,6}?([\d.]+)\s*%")),
+    ("PE", re.compile(r"(?:动态|当前|静态)?(?:PE|市盈率)\s*约?\s*([\d.]+)\s*倍")),
 ]
 
 
@@ -64,21 +67,26 @@ def extract_claims(blocks: list[dict]) -> list[dict]:
                 span = m.span()
                 if any(s < span[1] and span[0] < e for s, e in taken):
                     continue
+                if metric == "PE" and "目标" in text[max(0, span[0] - 4):span[0]]:
+                    continue
                 taken.append(span)
                 value = _f(m.group(1))
                 unit = m.group(2) if m.lastindex and m.lastindex >= 2 else None
-                if metric == "毛利率":
+                if metric in ("毛利率", "2025目标增速"):
                     unit = "%"
                 elif metric == "PE":
                     unit = "倍"
                 prefix = text[max(0, span[0] - 30):span[0]]
                 periods = re.findall(r"(20\d{2})\s*年", prefix)
+                period = periods[-1] if periods else "2024"
+                if metric == "2025目标增速":
+                    period = "2025"
                 suffix = text[span[1]:span[1] + 30]
                 gm = re.search(r"同比增长\s*(-?[\d.]+)\s*%", suffix)
                 claims.append({
                     "claim_id": next_id(), "kind": "numeric", "location": block["id"],
                     "metric": metric, "value": value, "unit": unit,
-                    "period": periods[-1] if periods else "2024",
+                    "period": period,
                     "growth": float(gm.group(1)) if gm else None,
                     "sentence": _sentence(text, span[0]),
                 })
@@ -91,12 +99,12 @@ def extract_claims(blocks: list[dict]) -> list[dict]:
                 "sentence": _sentence(text, m.start()),
             })
 
-        for cm in re.finditer(r"数据来源[：:]([^）)]+)", text):
+        for cm in re.finditer(r"(?:数据)?来源[于：:]([^）)]+)", text):
             inner = cm.group(1)
             pm = re.search(r"第\s*(\d+)\s*页", inner)
             if not pm:
                 continue
-            tm = re.search(r"第\s*\d+\s*页\s*[，,]?\s*([^）)，,；;]*)", inner)
+            tm = re.search(r"第\s*\d+\s*页\s*[，,]?\s*([^）)，,；;。]*)", inner)
             claims.append({
                 "claim_id": next_id(), "kind": "citation", "location": block["id"],
                 "page": int(pm.group(1)), "table": (tm.group(1).strip() if tm else ""),
@@ -193,7 +201,7 @@ def check_numeric(claim: dict, facts: dict) -> list[dict]:
 
     if metric == "基本每股收益":
         unit = claim["unit"]
-        if unit in ("亿元", "万元", "千元", "元") and abs(claim["value"] - fact["value"]) <= 0.005:
+        if unit in ("亿元", "万元", "千元") and abs(claim["value"] - fact["value"]) <= 0.005:
             fact_src = fact["sources"][0]
             return [_mk(
                 "E03", "中", claim["location"], claim["sentence"],
@@ -215,6 +223,8 @@ def check_numeric(claim: dict, facts: dict) -> list[dict]:
             dedupe_key=f"E01|EPS|{claim['value']}",
         )]
 
+    if metric == "PE" and "目标" in claim.get("sentence", ""):
+        return []
     if metric in ("毛利率", "PE"):
         if abs(claim["value"] - fact["value"]) <= TOL_RATE:
             return []
@@ -239,9 +249,23 @@ def check_numeric(claim: dict, facts: dict) -> list[dict]:
             dedupe_key=f"E02|{metric}|{claim['value']}",
         )]
 
+    if fact["unit"] == "%":
+        if abs(claim["value"] - fact["value"]) <= TOL_RATE:
+            return []
+        src = fact["sources"][0]
+        return [_mk(
+            "E02", "中", claim["location"], claim["sentence"],
+            f"{fact['value']:.2f}%",
+            f"按年报数据，“{metric}”应为约{fact['value']:.2f}%，请修改。",
+            f"年报第{src['page']}页“{src['table']}”：{fact['excerpt']}",
+            source={"file": pdf, "page": src["page"], "table": src["table"], "row": fact["metric"]},
+            dedupe_key=f"E02|{metric}|{claim['value']}",
+        )]
+
     claimed_yuan = claim["value"] * UNIT_TO_YUAN.get(claim["unit"] or "元", 1.0)
     fact_value = fact["value"]
-    if abs(claimed_yuan - fact_value) / max(abs(fact_value), 1) <= TOL_VALUE_REL:
+    same_display = round(claimed_yuan / 1e8, 2) == round(fact_value / 1e8, 2)
+    if same_display or abs(claimed_yuan - fact_value) / max(abs(fact_value), 1) <= TOL_VALUE_REL:
         return _check_growth(claim, fact, facts, pdf)
 
     fact_yi = fact_value / 1e8
@@ -344,22 +368,42 @@ def check_direction(claim: dict, facts: dict) -> list[dict]:
     )]
 
 
+def _facts_for_block(block: dict, facts: dict) -> list[dict]:
+    out = []
+    for c in extract_claims([block]):
+        if c["kind"] != "numeric":
+            continue
+        period = c.get("period") or "2024"
+        fact = (facts["items"].get(f"{c['metric']}|{period}")
+                or facts["items"].get(f"{c['metric']}|2024")
+                or facts["items"].get(f"{c['metric']}|2023"))
+        if fact and fact not in out:
+            out.append(fact)
+    return out
+
+
 def check_citation(claim: dict, blocks: list[dict], facts: dict) -> list[dict]:
-    block = next((b for b in blocks if b["id"] == claim["location"]), None)
-    if block is None:
+    idx = next((i for i, b in enumerate(blocks) if b["id"] == claim["location"]), None)
+    if idx is None:
         return []
-    metrics = {c["metric"] for c in extract_claims([block]) if c["kind"] == "numeric"}
+    facts_here = _facts_for_block(blocks[idx], facts)
+    if not facts_here:
+        for j in range(idx - 1, max(-1, idx - 4), -1):
+            if blocks[j]["type"] != "paragraph":
+                continue
+            facts_here = _facts_for_block(blocks[j], facts)
+            if facts_here:
+                break
     pages: set[int] = set()
     table_rows: list[tuple[int, str]] = []
-    for m in metrics:
-        fact = facts["items"].get(f"{m}|2024") or facts["items"].get(f"{m}|2023")
-        if not fact:
-            continue
+    for fact in facts_here:
         for s in fact.get("sources", []):
             if s.get("page"):
                 pages.add(s["page"])
             if s.get("table"):
                 table_rows.append((s.get("page"), s["table"]))
+    if not pages:
+        return []
     page_ok = claim["page"] in pages
     table_ok = True
     if claim["table"]:
@@ -441,12 +485,21 @@ def check_risk(blocks: list[dict], facts: dict) -> list[dict]:
         for s in f.get("sources", [])[:1]:
             if s.get("page"):
                 evidence_parts.append(f"年报第{s['page']}页“{s['table']}”")
+    source = {}
+    if target and target.get("sources"):
+        first = target["sources"][0]
+        source = {"file": facts["meta"]["file"], "page": first.get("page"), "table": first.get("table"),
+                  "row": first.get("row")}
+    elif growth is not None and facts["items"].get("销售费用|2024", {}).get("sources"):
+        first = facts["items"]["销售费用|2024"]["sources"][0]
+        source = {"file": facts["meta"]["file"], "page": first.get("page"), "table": first.get("table"),
+                  "row": first.get("row")}
     return [_mk(
         "E09", "中", risk_block["id"], text,
         "在风险提示中补充增速放缓与费用投放加大风险",
         "风险披露不完整：草稿通篇强调高增长，但未提示“" + "；".join(parts) + "”。建议在风险提示中补充。",
         "；".join(dict.fromkeys(evidence_parts)),
-        source={},
+        source=source,
         dedupe_key=None,
     )]
 

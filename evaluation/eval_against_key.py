@@ -1,6 +1,8 @@
+import json
 import re
 from pathlib import Path
 
+from tools.checks import TYPE_NAMES
 from tools.docx_reader import read_draft
 
 COMPAT = {
@@ -26,68 +28,89 @@ TOKENS = {
 }
 
 
-def load_key(key_path: str | Path) -> list[dict]:
+def _docx_key_items(key_path: str | Path) -> list[dict]:
     blocks = read_draft(key_path)
     table = next(b for b in blocks if b["type"] == "table")
     items = []
     for row in table["rows"][1:]:
         if not row or not row[0].startswith("X"):
             continue
+        kid = row[0]
+        loc = row[4] if len(row) > 4 else ""
+        pages = set(int(p) for p in re.findall(r"P(\d+)", loc))
+        pages |= set(int(p) for p in re.findall(r"第(\d+)页", loc))
+        if kid in ("X12", "X13"):
+            pages = {21}
         items.append({
-            "id": row[0], "type_cn": row[1], "wrong": row[2], "correct": row[3],
-            "loc": row[4], "suggestion": row[5], "severity": row[6],
+            "id": kid, "type_cn": row[1], "wrong": row[2], "correct": row[3], "loc": loc,
+            "suggestion": row[5] if len(row) > 5 else "", "severity": row[6] if len(row) > 6 else "",
+            "types": [COMPAT[kid]], "tokens": TOKENS[kid], "pages": sorted(pages),
         })
     return items
 
 
-def eval_against_key(errors: list[dict], key_path: str | Path) -> dict:
-    key_items = load_key(key_path)
+def load_key_items(key_path: str | Path) -> list[dict]:
+    key_path = Path(key_path)
+    if key_path.suffix.lower() == ".json":
+        data = json.loads(key_path.read_text(encoding="utf-8"))
+        items = []
+        for raw in data["items"]:
+            item = dict(raw)
+            item.setdefault("types", [item["type"]] if item.get("type") else [])
+            if not item.get("type_cn"):
+                item["type_cn"] = "、".join(f"{t} {TYPE_NAMES.get(t, '')}" for t in item["types"])
+            item.setdefault("pages", [])
+            item.setdefault("tokens", [])
+            items.append(item)
+        return items
+    return _docx_key_items(key_path)
+
+
+def evaluate(errors: list[dict], items: list[dict]) -> dict:
     used: set[int] = set()
-    for item in key_items:
+    for item in items:
         item["matched"] = None
         for idx, e in enumerate(errors):
             if idx in used:
                 continue
-            if e["error_type"] != COMPAT.get(item["id"]):
+            if e["error_type"] not in item["types"]:
                 continue
             text = e["wrong_text"] + e["correct_text"] + e["correction"] + e["evidence"]
-            if any(t in text for t in TOKENS.get(item["id"], [])):
+            if any(t in text for t in item["tokens"]):
                 item["matched"] = e
                 used.add(idx)
                 break
 
-    hit = sum(1 for i in key_items if i["matched"])
-    recall = hit / len(key_items) if key_items else 0.0
+    hit = sum(1 for i in items if i["matched"])
+    recall = hit / len(items) if items else 0.0
     precision = len(used) / len(errors) if errors else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
 
     ev_total = 0
     ev_ok = 0
-    for i in key_items:
-        if not i["matched"]:
+    for i in items:
+        if not i["matched"] or not i["pages"]:
             continue
         ev_total += 1
-        pages = set(re.findall(r"P(\d+)", i["loc"])) | set(re.findall(r"第(\d+)页", i["loc"]))
-        sys_page = i["matched"]["source_reference"].get("page")
-        ev_text = i["matched"]["evidence"]
-        if i["id"] in ("X12", "X13"):
-            if ("经营计划" in ev_text or "销售费用" in ev_text or "21页" in ev_text):
-                ev_ok += 1
-        elif sys_page is not None and str(sys_page) in pages:
+        sp = i["matched"].get("source_reference", {}).get("page")
+        if sp is not None and int(sp) in set(i["pages"]):
             ev_ok += 1
-    evidence_acc = ev_ok / ev_total if ev_total else 0.0
 
     return {
-        "key_total": len(key_items),
+        "key_total": len(items),
         "hit": hit,
         "recall": recall,
         "precision": precision,
         "f1": f1,
-        "evidence_accuracy": evidence_acc,
+        "evidence_accuracy": (ev_ok / ev_total) if ev_total else 0.0,
         "system_errors": len(errors),
         "fp": len(errors) - len(used),
-        "items": key_items,
+        "items": items,
     }
+
+
+def eval_against_key(errors: list[dict], key_path: str | Path) -> dict:
+    return evaluate(errors, load_key_items(key_path))
 
 
 def to_markdown(metrics: dict) -> str:

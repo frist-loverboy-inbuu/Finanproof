@@ -14,10 +14,23 @@ from agents.pipeline import run_check
 from evaluation.eval_against_key import eval_against_key, to_markdown
 
 KEY_DEFAULT = ROOT / "test" / "02_错误注入答案标注册_评测用.docx"
+SAMPLE_DIR = ROOT / "data" / "samples"
+PRICE_DEFAULT = SAMPLE_DIR / "price_snapshot.json"
 
-st.set_page_config(page_title="Finanproof 研报核查", layout="wide")
-st.title("Finanproof · 金融研报纠错核查系统")
-st.caption("赛题5：研究报告纠错核查 ｜ 确定性计算 + 证据定位 + 全流程审计 ｜ 相同输入 → 相同输出")
+st.set_page_config(page_title="NumProof 研报核查", layout="wide")
+
+ASSETS = Path(__file__).resolve().parent / "assets"
+
+head_left, head_right = st.columns([7, 2])
+with head_left:
+    st.title("NumProof — 面向可溯源计算的研报核查引擎")
+    st.caption("赛题5：研究报告纠错核查")
+with head_right:
+    logo_col, cat_col = st.columns(2)
+    with logo_col:
+        st.image(str(ASSETS / "buu.png"), width=80)
+    with cat_col:
+        st.image(str(ASSETS / "cat.jpg"), width=80)
 
 
 def _save_upload(upload) -> Path:
@@ -30,22 +43,23 @@ with st.sidebar:
     st.header("输入材料")
     draft_up = st.file_uploader("研报草稿（.docx）", type=["docx"])
     pdf_up = st.file_uploader("原始年报（.pdf）", type=["pdf"])
-    price_up = st.file_uploader("股价快照（.json）", type=["json"])
+    price_up = st.file_uploader("股价快照（.json，可选）", type=["json"])
+    st.caption("不传则使用内置样例：收盘价1342.00元（2025-04-03），用于估值倍数核查")
     run_btn = st.button("开始核查", type="primary", use_container_width=True)
 
 if run_btn:
-    if not (draft_up and pdf_up and price_up):
+    if not (draft_up and pdf_up):
         st.error("请先上传文件（报错代码：111222333）")
     else:
         draft = _save_upload(draft_up)
         pdf = _save_upload(pdf_up)
-        price = _save_upload(price_up)
+        price = _save_upload(price_up) if price_up else PRICE_DEFAULT
         with st.spinner("核查中：解析年报 → 提取事实 → 逐句核验 → 生成证据链…"):
             st.session_state["result"] = run_check(str(draft), str(pdf), str(price))
 
 res = st.session_state.get("result")
 if not res:
-    st.info("请上传研报草稿、原始年报与股价快照，然后点击左侧「开始核查」。")
+    st.info("请上传研报草稿与原始年报（股价快照可选，不传用内置样例），然后点击左侧「开始核查」。")
     st.stop()
 
 errors = res["errors"]
@@ -61,12 +75,6 @@ st.caption(f"运行ID：{res['run_id']} ｜ 草稿：{res['draft']} ｜ 原始�
 llm = res.get("llm", {})
 if llm.get("enabled"):
     st.success(f"核查总结（推理引擎：{llm.get('model')}）：{res['summary']}")
-    st.caption(
-        f"LLM推理：候选 {llm.get('candidates', 0)} 条 → 裁决确认 {len(errors)} 条 ｜ "
-        f"缓存命中 {llm.get('stats', {}).get('cache_hits', 0)} 次 ｜ "
-        f"实际调用 {llm.get('stats', {}).get('calls', 0)} 次 ｜ "
-        f"tokens {llm.get('stats', {}).get('prompt_tokens', 0) + llm.get('stats', {}).get('completion_tokens', 0)}"
-    )
     if llm.get("error"):
         st.warning(f"LLM部分步骤已回退到规则引擎：{llm['error']}")
 else:
