@@ -1,0 +1,309 @@
+{
+  "run_id": "run_20261003_150818_ccb7a5",
+  "draft": "finanproof_01_研究报告草稿_含植入错误.docx",
+  "pdf": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+  "stats": {
+    "total": 13,
+    "by_severity": {
+      "高": 8,
+      "中": 5,
+      "低": 0
+    },
+    "by_type": {
+      "E05": 2,
+      "E01": 1,
+      "E07": 1,
+      "E03": 2,
+      "E02": 2,
+      "E06": 1,
+      "E04": 1,
+      "E08": 1,
+      "E10": 1,
+      "E09": 1
+    }
+  },
+  "errors": [
+    {
+      "claim_id": "F001",
+      "error_type": "E05",
+      "error_type_cn": "口径错误",
+      "severity": "高",
+      "location": "P3",
+      "locations": [
+        "P3"
+      ],
+      "wrong_text": "其中扣非归母净利润862.28亿元，盈利质量保持稳健。",
+      "correct_text": "归母净利润 862.28亿元",
+      "correction": "“862.28”对应的是“归母净利润”（862.28亿元）；“扣非归母净利润”应为862.41亿元。请修改数值或修正指标名/口径，二者不可混用。",
+      "evidence": "年报第5页“主要会计数据”表·归属于上市公司股东的净利润行：归属于上市公司股东的净利润 86,228,146,421.62元，同比+15.38%",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "归属于上市公司股东的净利润"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E05|扣非归母净利润|862.28"
+    },
+    {
+      "claim_id": "F002",
+      "error_type": "E01",
+      "error_type_cn": "核心数值错误",
+      "severity": "高",
+      "location": "P3",
+      "locations": [
+        "P3",
+        "T0R2C1"
+      ],
+      "wrong_text": "实现归属于上市公司股东的净利润868.28亿元，同比增长15.38%（数据来源：公司2024年年度报告，第32页，合并资产负债表）。",
+      "correct_text": "862.28亿元",
+      "correction": "将“868.28亿元”改为“862.28亿元”。",
+      "evidence": "年报第5页“主要会计数据”表·归属于上市公司股东的净利润行：归属于上市公司股东的净利润 86,228,146,421.62元，同比+15.38%",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "归属于上市公司股东的净利润"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E01|归母净利润|868.28"
+    },
+    {
+      "claim_id": "F003",
+      "error_type": "E05",
+      "error_type_cn": "口径错误",
+      "severity": "高",
+      "location": "P3",
+      "locations": [
+        "P3"
+      ],
+      "wrong_text": "2024年公司实现营业收入1,741.44亿元，同比增长15.71%；",
+      "correct_text": "营业总收入 1,741.44亿元",
+      "correction": "“1,741.44”对应的是“营业总收入”（1,741.44亿元）；“营业收入”应为1,708.99亿元。请修改数值或修正指标名/口径，二者不可混用。",
+      "evidence": "年报第63页“合并利润表”表·营业总收入行：合并利润表：营业总收入 174,144,069,958.25元",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 63,
+        "table": "合并利润表",
+        "row": "营业总收入"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E05|营业收入|1741.44"
+    },
+    {
+      "claim_id": "F004",
+      "error_type": "E07",
+      "error_type_cn": "引用错误",
+      "severity": "高",
+      "location": "P3",
+      "locations": [
+        "P3"
+      ],
+      "wrong_text": "实现归属于上市公司股东的净利润868.28亿元，同比增长15.38%（数据来源：公司2024年年度报告，第32页，合并资产负债表）。",
+      "correct_text": "第5页“主要会计数据”；第63页“合并利润表”",
+      "correction": "引用错误：数据不在第32页“合并资产负债表”。应引用：第5页“主要会计数据”；第63页“合并利润表”。",
+      "evidence": "该段数据实际来源：第5页“主要会计数据”；第63页“合并利润表”",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据"
+      },
+      "confidence": 0.95,
+      "dedupe_key": null
+    },
+    {
+      "claim_id": "F005",
+      "error_type": "E03",
+      "error_type_cn": "单位错误",
+      "severity": "高",
+      "location": "P5",
+      "locations": [
+        "P5"
+      ],
+      "wrong_text": "截至报告期末，公司归属于上市公司股东的净资产达2,331.06亿元，总资产2,989.45万元（数据来源：2024年年度报告，第5页，主要会计数据表）。",
+      "correct_text": "2,989.45亿元",
+      "correction": "将单位由“万元”改为“亿元”，正确值为2,989.45亿元（数量级差1万倍）。",
+      "evidence": "年报第5页“主要会计数据”表·总资产行：总资产 298,944,579,918.70元",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "总资产"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E03|总资产|2989.45"
+    },
+    {
+      "claim_id": "F006",
+      "error_type": "E03",
+      "error_type_cn": "单位错误",
+      "severity": "中",
+      "location": "P6",
+      "locations": [
+        "P6"
+      ],
+      "wrong_text": "基本每股收益68.64亿元。",
+      "correct_text": "68.64元/股",
+      "correction": "将单位由“亿元”改为“元/股”（每股收益不能以金额单位表述）。",
+      "evidence": "年报第5页“主要会计数据”表·基本每股收益行：基本每股收益 68.64元/股",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "基本每股收益"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E03|EPS|68.64"
+    },
+    {
+      "claim_id": "F007",
+      "error_type": "E02",
+      "error_type_cn": "计算错误",
+      "severity": "中",
+      "location": "P6",
+      "locations": [
+        "P6"
+      ],
+      "wrong_text": "2024年公司综合毛利率约91.18%，净利率约48.76%；",
+      "correct_text": "91.93%",
+      "correction": "将“91.18%”改为“约91.93%”（公式：(营业收入-营业成本)/营业收入），并注明按“营业收入”口径计算；91.18%为预测期数值。",
+      "evidence": "(营业收入-营业成本)/营业收入 = (170,899,152,276.34-13,789,482,367.98)/170,899,152,276.34 ≈ 91.93%",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 63,
+        "table": "合并利润表",
+        "row": "毛利率"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E02|毛利率|91.18"
+    },
+    {
+      "claim_id": "F008",
+      "error_type": "E06",
+      "error_type_cn": "方向性错误",
+      "severity": "高",
+      "location": "P6",
+      "locations": [
+        "P6"
+      ],
+      "wrong_text": "费用端，管理费用同比下降4.25%，销售费用同比亦有所下降，体现公司费用管控能力持续增强，我们认为费用率仍有进一步下行空间。",
+      "correct_text": "销售费用同比增长21.31%",
+      "correction": "方向写反：销售费用实际为同比增长21.31%。主要系市场推广及服务费增加。",
+      "evidence": "年报第8页“利润表科目变动分析表”表·销售费用行：销售费用 5,639,300,059.49元，同比+21.31%（主要是市场推广及服务费增加）",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 8,
+        "table": "利润表科目变动分析表",
+        "row": "销售费用"
+      },
+      "confidence": 0.95,
+      "dedupe_key": null
+    },
+    {
+      "claim_id": "F009",
+      "error_type": "E04",
+      "error_type_cn": "期间错误",
+      "severity": "中",
+      "location": "P7",
+      "locations": [
+        "P7"
+      ],
+      "wrong_text": "2023年公司实现归母净利润747.34亿元，同比增长15.38%，延续高增长态势。",
+      "correct_text": "2023年增速约19.16%",
+      "correction": "15.38%是2024年增速；2023年“归母净利润”对应增速应约为19.16%（由2023年与上年数据重算）。请修改年份或增速数值。",
+      "evidence": "年报第5页“主要会计数据”表：2023年归母净利润 74,734,071,550.75元；重算见证据摘录",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "归母净利润"
+      },
+      "confidence": 0.95,
+      "dedupe_key": null
+    },
+    {
+      "claim_id": "F010",
+      "error_type": "E08",
+      "error_type_cn": "主体错误",
+      "severity": "高",
+      "location": "P7",
+      "locations": [
+        "P7"
+      ],
+      "wrong_text": "母公司报表口径下，2024年净利润约862.28亿元，与合并报表基本一致，盈利结构清晰。",
+      "correct_text": "合并报表口径下归属于上市公司股东的净利润862.28亿元",
+      "correction": "口径错误：862.28亿元是“合并报表归属于母公司股东的净利润”，并非母公司（本部）报表净利润。应改为“合并报表口径下归母净利润862.28亿元”，删除“母公司报表口径”表述。",
+      "evidence": "年报第5页“主要会计数据”表·归属于上市公司股东的净利润行：归属于上市公司股东的净利润 86,228,146,421.62元，同比+15.38%",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "归属于上市公司股东的净利润"
+      },
+      "confidence": 0.95,
+      "dedupe_key": null
+    },
+    {
+      "claim_id": "F011",
+      "error_type": "E02",
+      "error_type_cn": "计算错误",
+      "severity": "高",
+      "location": "T0R4C1",
+      "locations": [
+        "T0R4C1",
+        "P9"
+      ],
+      "wrong_text": "P/E（倍） 2024A=25.2",
+      "correct_text": "约19.6倍",
+      "correction": "按2024A EPS 68.64元、股价1342.00元计算，PE≈19.6倍；请核对“市值=股价×股本”与“PE=市值/归母净利润”的勾稽关系。",
+      "evidence": "PE = 股价1342.0元 / EPS 68.64元 ≈ 19.55倍",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 5,
+        "table": "主要会计数据",
+        "row": "PE"
+      },
+      "confidence": 0.95,
+      "dedupe_key": "E02|PE|25.2"
+    },
+    {
+      "claim_id": "F012",
+      "error_type": "E10",
+      "error_type_cn": "表述不严谨",
+      "severity": "中",
+      "location": "P9",
+      "locations": [
+        "P9"
+      ],
+      "wrong_text": "公司2025年业绩必将持续保持双位数增长，我们给予目标价1,671元，维持“买入”评级。",
+      "correct_text": "我们预计2025年公司收入增速约中高个位数，需跟踪需求恢复",
+      "correction": "“必将”属绝对化表述；盈利预测应使用“我们预计/预测”，并给出前提假设，明确区分事实、推论与观点。参考年报经营计划：2025年营业总收入增长目标约9%左右，不宜表述为“必将保持双位数增长”。",
+      "evidence": "年报第21页“经营计划”：2025年主要目标：营业总收入较上年度增长9%左右",
+      "source_reference": {
+        "file": "finanproof_贵州茅台2024年年度报告_中文.pdf",
+        "page": 21,
+        "table": "经营计划",
+        "row": "2025年主要目标"
+      },
+      "confidence": 0.95,
+      "dedupe_key": null
+    },
+    {
+      "claim_id": "F013",
+      "error_type": "E09",
+      "error_type_cn": "遗漏风险",
+      "severity": "中",
+      "location": "P10",
+      "locations": [
+        "P10"
+      ],
+      "wrong_text": "风险提示：宏观消费复苏不及预期；行业竞争加剧。",
+      "correct_text": "在风险提示中补充增速放缓与费用投放加大风险",
+      "correction": "风险披露不完整：草稿通篇强调高增长，但未提示“2025年营业总收入增长目标约9%（低于2024年15.66%）；销售费用同比+21.31%”。建议在风险提示中补充。",
+      "evidence": "年报第21页“经营计划”；年报第8页“利润表科目变动分析表”",
+      "source_reference": {},
+      "confidence": 0.95,
+      "dedupe_key": null
+    }
+  ]
+}

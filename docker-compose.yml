@@ -1,0 +1,10 @@
+services:
+  finanproof:
+    build: .
+    image: finanproof:latest
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data/output:/app/data/output
+      - ./logs:/app/logs
+    restart: unless-stopped

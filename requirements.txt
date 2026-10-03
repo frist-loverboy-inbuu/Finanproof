@@ -2,6 +2,7 @@ pymupdf
 pdfplumber
 pandas
 numpy
-langgraph
 streamlit
+python-docx
 python-dotenv
+requests
