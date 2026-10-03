@@ -220,6 +220,9 @@ def main():
     results = []
 
     for case in CASES:
+        if not Path(case["key"]).exists():
+            print(f"[SKIP] {case['name']}：未提供标准答案 {Path(case['key']).name}，跳过该案例")
+            continue
         facts = load_facts(PDF, PRICE)
         key_items = load_key_items(case["key"])
         runs = []

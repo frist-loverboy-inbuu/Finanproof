@@ -25,19 +25,23 @@ def main():
         ROOT / "data" / "output",
     )
 
-    expected = json.loads((ROOT / "data" / "expected" / "errors_expected.json").read_text(encoding="utf-8"))
-    exp_sigs = [_sig(e) for e in expected["errors"]]
-    act_sigs = [_sig(e) for e in result["errors"]]
-    if exp_sigs != act_sigs:
-        print(f"[FAIL] 输出与基线不一致：基线 {len(exp_sigs)} 条，本次 {len(act_sigs)} 条")
-        for s in act_sigs:
-            if s not in exp_sigs:
-                print("  多余/变化:", s[0], s[1])
-        for s in exp_sigs:
-            if s not in act_sigs:
-                print("  缺失/变化:", s[0], s[1])
-        sys.exit(1)
-    print(f"[PASS] 复现成功：核查输出与基线完全一致（{len(act_sigs)} 条错误）")
+    expected_path = ROOT / "data" / "expected" / "errors_expected.json"
+    if expected_path.exists():
+        expected = json.loads(expected_path.read_text(encoding="utf-8"))
+        exp_sigs = [_sig(e) for e in expected["errors"]]
+        act_sigs = [_sig(e) for e in result["errors"]]
+        if exp_sigs != act_sigs:
+            print(f"[FAIL] 输出与基线不一致：基线 {len(exp_sigs)} 条，本次 {len(act_sigs)} 条")
+            for s in act_sigs:
+                if s not in exp_sigs:
+                    print("  多余/变化:", s[0], s[1])
+            for s in exp_sigs:
+                if s not in act_sigs:
+                    print("  缺失/变化:", s[0], s[1])
+            sys.exit(1)
+        print(f"[PASS] 复现成功：核查输出与基线完全一致（{len(act_sigs)} 条错误）")
+    else:
+        print(f"[INFO] 未提供复现基线（data/expected），跳过一致性比对；本次核查输出 {len(result['errors'])} 条错误")
 
     key = ROOT / "test" / "02_错误注入答案标注册_评测用.docx"
     if key.exists():
@@ -50,6 +54,8 @@ def main():
         if metrics["recall"] < 1.0 or metrics["precision"] < 1.0:
             print("[FAIL] 指标未达标")
             sys.exit(1)
+    else:
+        print("[INFO] 未提供标准答案（test/），跳过指标评测")
     print(f"复现验证完成。运行ID：{result['run_id']}；输出：data/output；日志：{result['log_path']}")
 
 
